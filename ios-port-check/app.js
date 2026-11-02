@@ -1,4 +1,4 @@
-import { formatSize, markdownReport } from './report.js';
+import { formatSize, markdownReport, richTextReport } from './report.js';
 import { lookupAppStoreIcon } from './app-store.js';
 const $ = id => document.getElementById(id);
 let activeWorker = null, currentResult = null, iconURL = null, dragDepth = 0;
@@ -7,10 +7,15 @@ const setText = (id, text) => { $(id).textContent = text; };
 function writeReport(result) {
   const report = $('markdown-report');
   report.value = markdownReport(result); report.setSelectionRange(0, 0); report.scrollTop = 0;
+  $('rich-text-report').innerHTML = richTextReport(result).html;
+  $('rich-text-report').scrollTop = 0;
+}
+function disableReportCopy(disabled) {
+  $('copy-report').disabled = disabled; $('copy-rich-text').disabled = disabled;
 }
 function cancelArtworkLookup() {
   if (artworkRequest) { clearTimeout(artworkRequest.timer); artworkRequest.controller.abort(); artworkRequest = null; }
-  $('copy-report').disabled = false;
+  disableReportCopy(false);
 }
 function clearResult() {
   cancelArtworkLookup();
@@ -96,7 +101,7 @@ async function updateArtwork() {
   const request = { controller: new AbortController(), timer: null };
   request.timer = setTimeout(() => request.controller.abort(), 5000);
   artworkRequest = request;
-  $('copy-report').disabled = true;
+  disableReportCopy(true);
   setText('artwork-feedback', 'Looking up an App Store icon…');
   try {
     const url = await lookupAppStoreIcon(result.bundleId, { signal: request.controller.signal });
@@ -109,7 +114,7 @@ async function updateArtwork() {
     setText('artwork-feedback', 'App Store artwork is unavailable. The report is ready without it.');
   } finally {
     clearTimeout(request.timer);
-    if (artworkRequest === request) { artworkRequest = null; $('copy-report').disabled = false; }
+    if (artworkRequest === request) { artworkRequest = null; disableReportCopy(false); }
   }
 }
 async function copy(text, button) {
@@ -119,8 +124,27 @@ async function copy(text, button) {
     setText('copy-feedback', button === $('copy-report') ? 'Markdown report copied. Ready to paste.' : 'SHA-256 copied.');
     setText('announcements', 'Copied to clipboard.');
   } catch {
+    $('markdown-details').open = true;
     $('markdown-report').focus(); $('markdown-report').select();
     setText('copy-feedback', 'Clipboard access is unavailable. The report is selected — press ⌘C or Ctrl+C to copy.');
+  }
+}
+async function copyRichText() {
+  if (!currentResult) return;
+  try {
+    if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') throw new Error('Rich text clipboard unavailable');
+    const report = richTextReport(currentResult);
+    // Call write during the click gesture; no network work precedes clipboard access.
+    await navigator.clipboard.write([new ClipboardItem({
+      'text/html': new Blob([report.html], { type: 'text/html' }),
+      'text/plain': new Blob([report.text], { type: 'text/plain' })
+    })]);
+    setText('copy-feedback', 'Rich text report copied. Ready to paste into a rich-text editor.');
+    setText('announcements', 'Rich text copied to clipboard.');
+  } catch {
+    const preview = $('rich-text-report'), selection = window.getSelection(), range = document.createRange();
+    preview.focus(); range.selectNodeContents(preview); selection.removeAllRanges(); selection.addRange(range);
+    setText('copy-feedback', 'Rich text clipboard access is unavailable. The formatted report is selected — press ⌘C or Ctrl+C to copy.');
   }
 }
 $('choose-button').addEventListener('click', () => $('file-input').click());
@@ -129,6 +153,7 @@ $('file-input').addEventListener('change', event => { const file = event.target.
 $('cancel-button').addEventListener('click', () => { stopWorker(); idle(); clearResult(); setText('announcements', 'Inspection cancelled. No files were uploaded.'); $('choose-button').focus(); });
 $('dismiss-error').addEventListener('click', () => { $('error').hidden = true; $('choose-button').focus(); });
 $('copy-report').addEventListener('click', () => { if (currentResult) void copy($('markdown-report').value, $('copy-report')); });
+$('copy-rich-text').addEventListener('click', () => { void copyRichText(); });
 $('copy-ipa-hash').addEventListener('click', () => { if (currentResult) void copy(currentResult.ipaSha256, $('copy-ipa-hash')); });
 $('copy-executable-hash').addEventListener('click', () => { if (currentResult) void copy(currentResult.executableSha256, $('copy-executable-hash')); });
 $('app-icon').addEventListener('error', () => { $('app-icon').hidden = true; $('icon-fallback').hidden = false; });
