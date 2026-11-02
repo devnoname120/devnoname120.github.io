@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Give an old iOS game a second look. Read IPA metadata, check for ARMv7, and calculate SHA-256 hashes entirely on your device.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; worker-src 'self'; connect-src https://itunes.apple.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="theme-color" content="#f7f7f2">
+  <title>Portcheck — Could this iOS game come to Vita?</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="site-header wrap">
+    <a class="brand" href="./" aria-label="Portcheck home"><span class="brand-symbol" aria-hidden="true">p<span>↗</span></span>portcheck<span class="brand-dot">.</span></a>
+    <nav aria-label="Main navigation"><a href="#how-it-works">How it works <span aria-hidden="true">↗</span></a><span class="header-badge"><span class="live-dot"></span>IPA processed locally</span></nav>
+  </header>
+
+  <main class="wrap">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="tiny-cross" aria-hidden="true">✦</span> OLD GAMES. NEW POSSIBILITIES.</div>
+        <h1 id="hero-title">Could this iOS game<br>come to <span class="vita-word">Vita<span class="word-star" aria-hidden="true">✳</span>?</span></h1>
+        <p class="hero-description">That old iOS game might have another life.<br class="desktop-break"> Check your IPA for the ARMv7 executable a PS Vita port needs.</p>
+        <div class="hero-pills"><span><svg aria-hidden="true"><use href="#icon-lock"/></svg>No uploads</span><span><svg aria-hidden="true"><use href="#icon-bolt"/></svg>No installation</span><span><svg aria-hidden="true"><use href="#icon-check"/></svg>Just your browser</span></div>
+      </div>
+      <div class="device-scene" aria-hidden="true">
+        <div class="scene-orbit orbit-one"></div><div class="scene-orbit orbit-two"></div><span class="scene-spark spark-one">+</span><span class="scene-spark spark-two">✧</span>
+        <div class="phone"><div class="phone-speaker"></div><div class="phone-screen"><div class="pixel-scene"><div class="pixel-sun"></div><div class="pixel-hill hill-back"></div><div class="pixel-hill hill-front"></div><span class="pixel-player"></span><span class="pixel-coin"></span></div><div class="phone-caption">ONE MORE PLAY?</div></div><div class="phone-home"></div></div>
+        <div class="transfer-arrow">↗</div>
+        <div class="vita"><div class="vita-left"><i class="stick"></i><i class="dpad"></i></div><div class="vita-screen"><div class="pixel-scene"><div class="pixel-sun"></div><div class="pixel-hill hill-back"></div><div class="pixel-hill hill-front"></div><span class="pixel-player"></span><span class="pixel-coin"></span></div></div><div class="vita-right"><div class="face-buttons"><i></i><i></i><i></i><i></i></div><i class="stick"></i></div></div>
+        <div class="scene-label">iOS <span>→</span> PS VITA</div>
+      </div>
+    </section>
+
+    <section class="checker-grid" aria-label="IPA checker">
+      <div class="upload-card">
+        <div class="card-topline"><span><span class="step-label">01</span> CHECK YOUR GAME</span><span class="file-type">.ipa</span></div>
+        <div id="drop-zone" class="drop-zone">
+          <input id="file-input" type="file" accept=".ipa" aria-label="Choose an IPA file">
+          <div class="file-glyph" aria-hidden="true"><svg><use href="#icon-file"/></svg><span>IPA</span><i>+</i></div>
+          <h2>Drop your IPA here</h2>
+          <p>Or choose a file to take a closer look.</p>
+          <button type="button" class="button primary" id="choose-button"><svg aria-hidden="true"><use href="#icon-folder"/></svg>Choose IPA file <span aria-hidden="true">↗</span></button>
+          <span class="drop-hint">One game. One file. All local.</span>
+        </div>
+        <div id="processing" class="processing" hidden aria-live="polite">
+          <div class="scan-orbit" aria-hidden="true"><svg><use href="#icon-file"/></svg></div>
+          <h2>Taking a closer look…</h2>
+          <p id="processing-file"></p>
+          <progress id="progress" max="100" value="0" aria-label="IPA inspection progress"></progress>
+          <div class="progress-label"><span id="progress-label">Reading archive</span><span id="progress-value">0%</span></div>
+          <button class="text-button" id="cancel-button" type="button">Cancel inspection</button>
+        </div>
+        <div id="checked-state" class="checked-state" hidden><span class="checked-symbol" aria-hidden="true">✓</span><h2>Inspection complete</h2><p id="checked-file"></p><button type="button" class="button secondary" id="another-button">Check another IPA <span aria-hidden="true">↗</span></button></div>
+        <div class="upload-footer"><svg aria-hidden="true"><use href="#icon-lock"/></svg>Your IPA never leaves this device. No files are stored.</div>
+      </div>
+
+      <aside class="looking-card">
+        <div class="eyebrow">THE FIRST CHECK</div>
+        <h2>It’s what’s inside <br>that counts.</h2>
+        <p>We look at the game’s main executable for the architecture that matters.</p>
+        <div class="architecture-row"><span class="architecture-icon yes">✓</span><div><strong>ARMv7 inside</strong><span>A candidate for a Vita port</span></div><code>32-bit</code></div>
+        <div class="architecture-row"><span class="architecture-icon no">×</span><div><strong>ARM64 only</strong><span>Try an older game version</span></div><code>64-bit</code></div>
+        <div class="small-note"><svg aria-hidden="true"><use href="#icon-info"/></svg><p>A starting point, not a promise. Apple features, graphics, and memory use still need a closer look.</p></div>
+      </aside>
+    </section>
+
+    <div id="error" class="error-banner" role="alert" hidden><svg aria-hidden="true"><use href="#icon-info"/></svg><div><strong>Couldn’t inspect this IPA</strong><p id="error-message"></p></div><button id="dismiss-error" aria-label="Dismiss error" type="button">×</button></div>
+
+    <section id="results" class="results" aria-labelledby="result-heading" hidden tabindex="-1">
+      <div class="section-heading"><div><span class="eyebrow">THE RESULTS ARE IN</span><h2 id="result-heading">Your game, under the hood.</h2></div><span class="local-result"><span class="live-dot"></span>Checked locally</span></div>
+      <div id="verdict" class="verdict"><div id="verdict-icon" class="verdict-icon" aria-hidden="true">✓</div><div><span class="verdict-eyebrow" id="verdict-eyebrow"></span><h3 id="verdict-title"></h3><p id="verdict-description"></p></div></div>
+      <div class="metadata-card">
+        <div class="app-heading"><div class="app-icon-wrap"><img id="app-icon" alt="" hidden><span id="icon-fallback" aria-hidden="true">◈</span></div><div><h3 id="app-name"></h3><p id="bundle-id"></p></div><span class="ipa-tag">iOS APP</span></div>
+        <dl class="metadata-grid"><div><dt>Version</dt><dd id="app-version"></dd></div><div><dt>Minimum iOS</dt><dd id="minimum-ios"></dd></div><div><dt>IPA size</dt><dd id="ipa-size"></dd></div><div id="release-date-field" hidden><dt>Release date</dt><dd id="release-date"></dd></div><div><dt>Architectures</dt><dd id="architectures"></dd></div><div><dt>Main executable</dt><dd id="executable-name"></dd></div></dl>
+        <p id="metadata-note" class="metadata-note"></p>
+        <div class="hash-section"><div class="hash-heading"><span><svg aria-hidden="true"><use href="#icon-fingerprint"/></svg>FILE FINGERPRINTS</span><span>SHA-256</span></div><div class="hash-row"><div><span>IPA archive</span><button type="button" class="copy-hash" id="copy-ipa-hash" aria-label="Copy IPA SHA-256">Copy <svg aria-hidden="true"><use href="#icon-copy"/></svg></button></div><code id="ipa-hash"></code></div><div class="hash-row"><div><span>Main executable <small>(complete file, all slices)</small></span><button type="button" class="copy-hash" id="copy-executable-hash" aria-label="Copy main executable SHA-256">Copy <svg aria-hidden="true"><use href="#icon-copy"/></svg></button></div><code id="executable-hash"></code></div></div>
+      </div>
+      <div class="report-card"><div class="report-heading"><div><span class="eyebrow">TAKE THE DETAILS WITH YOU</span><h3>A little report. Ready to share.</h3><p>Metadata, verdict, and both hashes in copyable Markdown.</p></div><button class="button primary" id="copy-report" type="button"><svg aria-hidden="true"><use href="#icon-copy"/></svg>Copy Markdown</button></div><p id="artwork-feedback" class="artwork-feedback" role="status" aria-live="polite"></p><textarea id="markdown-report" readonly spellcheck="false" aria-label="Copyable Markdown portability report"></textarea><p id="copy-feedback" class="copy-feedback" role="status" aria-live="polite"></p></div>
+    </section>
+
+    <section class="guide" id="how-it-works" aria-labelledby="guide-title">
+      <div class="section-heading"><div><span class="eyebrow">A QUICK FIELD GUIDE</span><h2 id="guide-title">Which games are worth a look?</h2></div><span class="guide-caption">Clues to explore. Not automatic verdicts.</span></div>
+      <div class="guide-grid">
+        <article><span class="guide-number">01 / THE ERA</span><h3>Start with the classics.</h3><p>Games released around 2007–2016 are a useful place to look. An older version may keep the ARMv7 binary that a newer update dropped.</p><span class="guide-tag">Older versions can matter</span></article>
+        <article><span class="guide-number">02 / THE HARDWARE</span><h3>Think early iPhones.</h3><p>Games that ran on iPhone 3GS, 4, or 4S are promising. iPhone 5 and 5C titles need a closer look at memory use.</p><span class="guide-tag">Check the binary, not the phone</span></article>
+        <article><span class="guide-number">03 / THE DEPENDENCIES</span><h3>Less Apple. More game.</h3><p>Games with fewer Apple UI and platform dependencies tend to be better candidates. ARMv7 is only the first piece of the puzzle.</p><span class="guide-tag">Manual review still needed</span></article>
+      </div>
+      <details class="guide-details"><summary>What this check can — and can’t — tell you <span aria-hidden="true">+</span></summary><div><p><strong>“Portable” means an ARMv7 executable was found in this version.</strong> We inspect the actual main Mach-O executable, including universal binaries. We don’t infer compatibility from the game’s age, metadata, or supported devices. ARMv7s alone does not pass this ARMv7 check.</p><p>Original iPhone and iPhone 3G games may contain only ARMv6 and will not pass this check. Running on an iPhone 5S or later also doesn’t prove a game is ARM64-only: older universal versions can include ARMv7. <a href="https://developer.apple.com/news/upcoming-requirements/?id=06062022a" target="_blank" rel="noreferrer">iOS 11 stopped launching 32-bit apps</a>, so minimum iOS is a useful clue, not the verdict.</p><p>Actual porting still requires engineering work and review of memory, graphics, iOS APIs, and any binary encryption. This tool does not execute, modify, or port the game. Missing or invalid executables produce an inspection error rather than a negative verdict.</p><p>Release dates appear only when the IPA explicitly includes release metadata. ZIP timestamps, purchase dates, and signing dates are never used as release dates. The icon displayed in the results is extracted locally when a readable standalone image is available.</p><p>IPAs are read in a local browser worker. SHA-256 covers every byte of the original IPA and every byte of its decompressed main executable, including all architecture slices. File contents and hashes stay on your device.</p><p>The App Store icon lookup sends only the bundle ID from the IPA to Apple’s US lookup service. When an exact match is found, the Markdown includes a public artwork URL from the current listing; its icon may differ from this older version. A delisted app or an unavailable lookup leaves the report without an icon.</p></div></details>
+    </section>
+  </main>
+  <footer class="site-footer wrap"><a class="brand footer-brand" href="./">portcheck<span class="brand-dot">.</span></a><span>A second look for a second life.</span><span class="footer-local"><svg aria-hidden="true"><use href="#icon-lock"/></svg>Built to keep your files yours.</span></footer>
+  <div id="announcements" class="sr-only" role="status" aria-live="polite"></div>
+  <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/></symbol>
+    <symbol id="icon-bolt" viewBox="0 0 24 24"><path d="m13 2-9 12h7l-1 8 10-13h-8z"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="icon-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zm0 0v6h6"/></symbol>
+    <symbol id="icon-folder" viewBox="0 0 24 24"><path d="M3 8V6a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v1M3 8h17a1 1 0 0 1 1 1l-2 10H4L2 9a1 1 0 0 1 1-1z"/></symbol>
+    <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/></symbol>
+    <symbol id="icon-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+    <symbol id="icon-fingerprint" viewBox="0 0 24 24"><path d="M4 11a8 8 0 0 1 16 0v5M7 14v-3a5 5 0 0 1 10 0v6m-7 3v-9a2 2 0 0 1 4 0v8M4 15v2m3 1v3"/></symbol>
+  </defs></svg>
+</body>
+</html>
