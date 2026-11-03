@@ -28,8 +28,8 @@ export function markdownReport(r) {
     `- **Main executable:** ${code(r.executablePath)}`,
     `  - Size: ${formatSize(r.executableSize)}`,
     `  - SHA-256: ${code(r.executableSha256)}`,
-    ...(!r.portable ? ['', 'Try an older version of this game: it may still include an ARMv7 executable.'] : []),
-    ...(r.encrypted ? ['', 'The ARMv7 executable has an encryption flag; this report does not establish that it is ready to run.'] : [])
+    ...(!r.portable ? ['', 'Try an older version of this game: it may include an ARMv6 or ARMv7 executable.'] : []),
+    ...(r.encrypted ? ['', 'A supported ARM executable has an encryption flag; this report does not establish that it is ready to run.'] : [])
   ].filter((line, i, lines) => line !== '' || lines[i - 1] !== '').join('\n').trim();
 }
 
@@ -53,8 +53,8 @@ export function richTextReport(r) {
   ];
   const image = artworkURL(r.appStoreIconUrl);
   const notes = [
-    ...(!r.portable ? ['Try an older version of this game: it may still include an ARMv7 executable.'] : []),
-    ...(r.encrypted ? ['The ARMv7 executable has an encryption flag; this report does not establish that it is ready to run.'] : [])
+    ...(!r.portable ? ['Try an older version of this game: it may include an ARMv6 or ARMv7 executable.'] : []),
+    ...(r.encrypted ? ['A supported ARM executable has an encryption flag; this report does not establish that it is ready to run.'] : [])
   ];
   return {
     html: `<p><strong>${html(title)}</strong></p>` +

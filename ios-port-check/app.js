@@ -61,22 +61,24 @@ function render(r) {
   currentResult = r;
   $('processing').hidden = true; $('checked-state').hidden = false; setText('checked-file', r.fileName);
   const verdict = $('verdict'); verdict.classList.toggle('negative', !r.portable);
+  const supported = r.architectures.filter(name => name === 'armv6' || name === 'armv7');
+  const supportedLabel = supported.map(name => name.replace('arm', 'ARM')).join(' and ');
   setText('verdict-icon', r.portable ? '✓' : '↶');
-  setText('verdict-eyebrow', r.portable ? 'ARMV7 FOUND · ARCHITECTURE CHECK PASSED' : 'NO ARMV7 FOUND · TRY AN OLDER VERSION');
+  setText('verdict-eyebrow', r.portable ? `${supportedLabel} FOUND · ARCHITECTURE CHECK PASSED` : 'NO ARMv6 OR ARMv7 FOUND · TRY AN OLDER VERSION');
   setText('verdict-title', r.portable ? 'Portable — a candidate for Vita.' : 'This version is not portable.');
-  setText('verdict-description', r.portable ? 'This version includes an ARMv7 executable. That’s the first requirement for a PS Vita port. iOS dependencies, graphics, and memory use still need manual review; a working port isn’t guaranteed.' : `This version contains ${r.architectures.join(', ')} but no ARMv7 executable. Try an older version of this game — it may still include ARMv7 and could be portable.`);
+  setText('verdict-description', r.portable ? `This version includes ${supportedLabel} code, meeting the loader’s architecture requirement. iOS dependencies, graphics, and memory use still need manual review; a working port isn’t guaranteed.` : `This version contains ${r.architectures.join(', ')} but no ARMv6 or ARMv7 executable. Try an older version of this game — it may include ARMv6 or ARMv7 and could be portable.`);
   setText('app-name', r.name); setText('bundle-id', r.bundleId || 'Bundle ID not available');
   setText('app-version', `${r.version || 'Not available'}${r.build ? ` · build ${r.build}` : ''}`);
   setText('minimum-ios', r.minimumIOS ? `iOS ${r.minimumIOS}` : 'Not in metadata');
   setText('ipa-size', formatSize(r.ipaSize)); $('ipa-size').title = `${r.ipaSize.toLocaleString()} bytes (compressed archive); app contents: ${formatSize(r.appSize)}`;
   $('release-date-field').hidden = !r.releaseDate;
   setText('release-date', r.releaseDate || ''); $('release-date').title = r.releaseSource || '';
-  $('architectures').replaceChildren(...r.architectures.map(name => { const chip = document.createElement('span'); chip.className = 'arch-chip' + (name === 'armv7' ? ' armv7' : ''); chip.textContent = name; return chip; }));
+  $('architectures').replaceChildren(...r.architectures.map(name => { const chip = document.createElement('span'); chip.className = 'arch-chip' + (supported.includes(name) ? ' supported' : ''); chip.textContent = name; return chip; }));
   setText('executable-name', r.executablePath.split('/').at(-1)); $('executable-name').title = `${r.executablePath} (${formatSize(r.executableSize)})`;
   const notes = [...r.warnings];
   if (!r.icon) notes.push('No readable standalone icon was found; the icon may be in an asset catalog.');
   if (r.releaseDate) notes.push(`Release date source: ${r.releaseSource}.`);
-  if (r.encrypted) notes.push('The ARMv7 executable has an encryption flag. Architecture compatibility does not establish that it is ready to run.');
+  if (r.encrypted) notes.push('A supported ARM executable has an encryption flag. Architecture compatibility does not establish that it is ready to run.');
   setText('metadata-note', notes.join(' ')); $('metadata-note').hidden = !notes.length;
   if (r.icon) {
     iconURL = URL.createObjectURL(new Blob([r.icon.bytes], { type: r.icon.mime })); $('app-icon').src = iconURL;
@@ -85,7 +87,7 @@ function render(r) {
   setText('ipa-hash', r.ipaSha256); setText('executable-hash', r.executableSha256);
   writeReport(r); setText('copy-feedback', '');
   $('results').hidden = false;
-  setText('announcements', `${r.name}: ${r.portable ? 'ARMv7 found. Architecture check passed.' : 'This version is not portable. Try an older version.'}`);
+  setText('announcements', `${r.name}: ${r.portable ? `${supportedLabel} found. Architecture check passed.` : 'This version is not portable. Try an older version.'}`);
   $('results').focus({ preventScroll: true });
   $('results').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
   void updateArtwork();

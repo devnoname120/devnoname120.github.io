@@ -108,6 +108,7 @@ export class MachOScanner {
       if (at !== slice.load.length) invalid();
       return { name: info.name, cpu: info.cpu, subtype: info.subtype & 0xffffff, encrypted, offset: slice.offset, size: slice.size };
     });
-    return { slices: results, architectures: [...new Set(results.map(s => s.name))], portable: results.some(s => s.cpu === 12 && s.subtype === 9), encrypted: results.some(s => s.cpu === 12 && s.subtype === 9 && s.encrypted) };
+    const supported = results.filter(s => s.cpu === 12 && (s.subtype === 6 || s.subtype === 9));
+    return { slices: results, architectures: [...new Set(results.map(s => s.name))], portable: supported.length > 0, encrypted: supported.some(s => s.encrypted) };
   }
 }
