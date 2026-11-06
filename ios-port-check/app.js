@@ -1,7 +1,7 @@
-import { formatSize, markdownReport, richTextReport } from './report.js';
+import { markdownReport, richTextReport } from './report.js';
 import { lookupAppStoreIcon } from './app-store.js';
 const $ = id => document.getElementById(id);
-let activeWorker = null, currentResult = null, iconURL = null, dragDepth = 0;
+let activeWorker = null, currentResult = null, dragDepth = 0;
 let artworkRequest = null;
 const setText = (id, text) => { $(id).textContent = text; };
 function writeReport(result) {
@@ -20,8 +20,6 @@ function cancelArtworkLookup() {
 function clearResult() {
   cancelArtworkLookup();
   currentResult = null; $('results').hidden = true;
-  if (iconURL) URL.revokeObjectURL(iconURL); iconURL = null;
-  $('app-icon').removeAttribute('src'); $('app-icon').hidden = true; $('icon-fallback').hidden = false;
   setText('copy-feedback', '');
 }
 function stopWorker() {
@@ -67,24 +65,6 @@ function render(r) {
   setText('verdict-eyebrow', r.portable ? `${supportedLabel} FOUND · ARCHITECTURE CHECK PASSED` : 'NO ARMv6 OR ARMv7 FOUND · TRY AN OLDER VERSION');
   setText('verdict-title', r.portable ? 'Portable — a candidate for Vita.' : 'This version is not portable.');
   setText('verdict-description', r.portable ? `This version includes ${supportedLabel} code, meeting the loader’s architecture requirement. iOS dependencies, graphics, and memory use still need manual review; a working port isn’t guaranteed.` : `This version contains ${r.architectures.join(', ')} but no ARMv6 or ARMv7 executable. Try an older version of this game — it may include ARMv6 or ARMv7 and could be portable.`);
-  setText('app-name', r.name); setText('bundle-id', r.bundleId || 'Bundle ID not available');
-  setText('app-version', `${r.version || 'Not available'}${r.build ? ` · build ${r.build}` : ''}`);
-  setText('minimum-ios', r.minimumIOS ? `iOS ${r.minimumIOS}` : 'Not in metadata');
-  setText('ipa-size', formatSize(r.ipaSize)); $('ipa-size').title = `${r.ipaSize.toLocaleString()} bytes (compressed archive); app contents: ${formatSize(r.appSize)}`;
-  $('release-date-field').hidden = !r.releaseDate;
-  setText('release-date', r.releaseDate || ''); $('release-date').title = r.releaseSource || '';
-  $('architectures').replaceChildren(...r.architectures.map(name => { const chip = document.createElement('span'); chip.className = 'arch-chip' + (supported.includes(name) ? ' supported' : ''); chip.textContent = name; return chip; }));
-  setText('executable-name', r.executablePath.split('/').at(-1)); $('executable-name').title = `${r.executablePath} (${formatSize(r.executableSize)})`;
-  const notes = [...r.warnings];
-  if (!r.icon) notes.push('No readable standalone icon was found; the icon may be in an asset catalog.');
-  if (r.releaseDate) notes.push(`Release date source: ${r.releaseSource}.`);
-  if (r.encrypted) notes.push('A supported ARM executable has an encryption flag. Architecture compatibility does not establish that it is ready to run.');
-  setText('metadata-note', notes.join(' ')); $('metadata-note').hidden = !notes.length;
-  if (r.icon) {
-    iconURL = URL.createObjectURL(new Blob([r.icon.bytes], { type: r.icon.mime })); $('app-icon').src = iconURL;
-    $('app-icon').alt = `${r.name} app icon`; $('app-icon').hidden = false; $('icon-fallback').hidden = true;
-  }
-  setText('ipa-hash', r.ipaSha256); setText('executable-hash', r.executableSha256);
   writeReport(r); setText('copy-feedback', '');
   $('results').hidden = false;
   setText('announcements', `${r.name}: ${r.portable ? `${supportedLabel} found. Architecture check passed.` : 'This version is not portable. Try an older version.'}`);
@@ -119,11 +99,12 @@ async function updateArtwork() {
     if (artworkRequest === request) { artworkRequest = null; disableReportCopy(false); }
   }
 }
-async function copy(text, button) {
+async function copyMarkdown() {
+  if (!currentResult) return;
   try {
     if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
-    await navigator.clipboard.writeText(text);
-    setText('copy-feedback', button === $('copy-report') ? 'Markdown report copied. Ready to paste.' : 'SHA-256 copied.');
+    await navigator.clipboard.writeText($('markdown-report').value);
+    setText('copy-feedback', 'Markdown report copied. Ready to paste.');
     setText('announcements', 'Copied to clipboard.');
   } catch {
     $('markdown-details').open = true;
@@ -154,11 +135,8 @@ $('another-button').addEventListener('click', () => $('file-input').click());
 $('file-input').addEventListener('change', event => { const file = event.target.files[0]; event.target.value = ''; inspect(file); });
 $('cancel-button').addEventListener('click', () => { stopWorker(); idle(); clearResult(); setText('announcements', 'Inspection cancelled. No files were uploaded.'); $('choose-button').focus(); });
 $('dismiss-error').addEventListener('click', () => { $('error').hidden = true; $('choose-button').focus(); });
-$('copy-report').addEventListener('click', () => { if (currentResult) void copy($('markdown-report').value, $('copy-report')); });
+$('copy-report').addEventListener('click', () => { void copyMarkdown(); });
 $('copy-rich-text').addEventListener('click', () => { void copyRichText(); });
-$('copy-ipa-hash').addEventListener('click', () => { if (currentResult) void copy(currentResult.ipaSha256, $('copy-ipa-hash')); });
-$('copy-executable-hash').addEventListener('click', () => { if (currentResult) void copy(currentResult.executableSha256, $('copy-executable-hash')); });
-$('app-icon').addEventListener('error', () => { $('app-icon').hidden = true; $('icon-fallback').hidden = false; });
 const zone = $('drop-zone');
 zone.addEventListener('dragenter', event => { event.preventDefault(); dragDepth++; zone.classList.add('dragging'); });
 zone.addEventListener('dragleave', event => { event.preventDefault(); if (--dragDepth <= 0) { dragDepth = 0; zone.classList.remove('dragging'); } });
@@ -166,4 +144,4 @@ zone.addEventListener('dragover', event => { event.preventDefault(); event.dataT
 zone.addEventListener('drop', event => { event.preventDefault(); event.stopPropagation(); dragDepth = 0; zone.classList.remove('dragging'); const files = event.dataTransfer.files; if (files.length !== 1) showError('Choose one IPA at a time.'); else inspect(files[0]); });
 document.addEventListener('dragover', event => { if ([...event.dataTransfer.types].includes('Files')) event.preventDefault(); });
 document.addEventListener('drop', event => { event.preventDefault(); });
-window.addEventListener('pagehide', () => { stopWorker(); cancelArtworkLookup(); if (iconURL) URL.revokeObjectURL(iconURL); });
+window.addEventListener('pagehide', () => { stopWorker(); cancelArtworkLookup(); });
